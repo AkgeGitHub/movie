@@ -4,80 +4,28 @@
       <div class="city_hot">
         <h2>热门城市</h2>
         <ul class="clearfix">
-          <li>上海</li>
-          <li>北京</li>
-          <li>上海</li>
-          <li>北京</li>
-          <li>上海</li>
-          <li>北京</li>
-          <li>上海</li>
-          <li>北京</li>
+            <li v-for="hot in hotlist" :key="hot.cityId">
+                {{hot.name}}
+            </li>
         </ul>
       </div>
-      <div class="city_sort">
-        <div>
-          <h2>A</h2>
-          <ul>
-            <li>阿拉善盟</li>
-            <li>鞍山</li>
-            <li>安庆</li>
-            <li>安阳</li>
-          </ul>
+      <div class="city_sort" ref="city_sort">
+        <div v-for="citysort in citylist" :key="citysort.index">
+            <h2>{{citysort.index}}</h2>
+            <ul>
+                <li v-for="cities in citysort.list" :key="cities.cityId">
+                    {{cities.name}}
+                </li>
+            </ul>
         </div>
-        <div>
-          <h2>B</h2>
-          <ul>
-            <li>北京</li>
-            <li>保定</li>
-            <li>蚌埠</li>
-            <li>包头</li>
-          </ul>
-        </div>
-        <div>
-          <h2>A</h2>
-          <ul>
-            <li>阿拉善盟</li>
-            <li>鞍山</li>
-            <li>安庆</li>
-            <li>安阳</li>
-          </ul>
-        </div>
-        <div>
-          <h2>B</h2>
-          <ul>
-            <li>北京</li>
-            <li>保定</li>
-            <li>蚌埠</li>
-            <li>包头</li>
-          </ul>
-        </div>
-        <div>
-          <h2>A</h2>
-          <ul>
-            <li>阿拉善盟</li>
-            <li>鞍山</li>
-            <li>安庆</li>
-            <li>安阳</li>
-          </ul>
-        </div>
-        <div>
-          <h2>B</h2>
-          <ul>
-            <li>北京</li>
-            <li>保定</li>
-            <li>蚌埠</li>
-            <li>包头</li>
-          </ul>
-        </div>
+       
       </div>
     </div>
     <div class="city_index">
       <ul>
-        <li>A</li>
-        <li>B</li>
-        <li>C</li>
-        <li>D</li>
-        <li>E</li>
+        <li v-for="(citysort,index) in citylist" :key="citysort.index" @touchstart="handeleToIndex(index)">
+            {{citysort.index}}
+        </li>
       </ul>
     </div>
   </div>
@@ -85,7 +33,83 @@
 
 <script>
 export default {
-    name:'city'
+    name:'city',
+    data(){
+        return{
+            citylist:[],
+            hotlist:[]
+        }
+    },
+    methods:{
+        formatCitylist(cities){
+            var hotlist=[];
+            var citylist=[];
+
+            for(var i=0;i<cities.length;i++){
+                var firstLetter=cities[i].pinyin.substring(0,1).toUpperCase();
+                if(cities[i].isHot){
+                    hotlist.push({name:cities[i].name,cityId:cities[i].cityId});
+                }
+                if(toCom(firstLetter)){
+                    citylist.push({index:firstLetter,list:[{name:cities[i].name,cityId:cities[i].cityId}]});
+                }else{
+                    for(var j=0;j<citylist.length;j++){
+                        if(citylist[j].index===firstLetter){
+                            citylist[j].list.push({name:cities[i].name,cityId:cities[i].cityId});
+                        }
+                    }
+                }
+            }
+
+            citylist.sort((n1,n2)=>{
+                if(n1.index>n2.index){
+                    return 1;
+                }else if(n1.index<n2.index){
+                    return -1;
+                }else{
+                    return 0;
+                }
+            })
+
+            function toCom(firstLetter){
+                for(var i=0;i<citylist.length;i++){
+                    if(citylist[i].index===firstLetter){
+                        return false;
+                    }
+                }
+                return true;
+
+            }
+
+            return{
+                hotlist,
+                citylist
+            }
+
+        },
+        handeleToIndex(index){
+            var h2=this.$refs.city_sort.getElementsByTagName("h2");
+            this.$refs.city_sort.parentNode.scrollTop=h2[index].offsetTop
+        }
+        
+    },
+    mounted(){
+        this.axios({
+            url:"https://m.maizuo.com/gateway?k=7731292",
+            headers:{
+              "X-Client-Info": '{"a":"3000","ch":"1002","v":"5.0.4","e":"1597114756230519484710913"}',
+             "X-Host": "mall.film-ticket.city.list"
+            }
+        }).then(res=>{
+            if(res.data.msg==="ok"){
+                var cities=res.data.data.cities;
+                var {citylist,hotlist}=this.formatCitylist(cities);
+                this.citylist=citylist;
+                this.hotlist=hotlist;
+            }
+
+        })
+    }
 };
 </script>
 
