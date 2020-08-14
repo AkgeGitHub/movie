@@ -1,8 +1,11 @@
 <template>
-    <div class="movie_body">
+    <div class="movie_body" ref="movie_body">
+		<loading v-if="isLoading"></loading>
+			<scroller :handleToScroll="handleToScroll" :handleToTouchEnd="handleToTouchEnd">
 				<ul>
+					<li class="pullDown">{{pullDownMsg}}</li>
 					<li v-for="film in filmslist" :key="film.filmId">
-						<div class="pic_show"><img :src="film.poster"></div>
+						<div class="pic_show" @tap="handleToDetail"><img :src="film.poster"></div>
 						<div class="info_list">
 							<h2>{{film.name}}</h2>
 							<p>观众评 <span class="grade">{{film.grade}}</span></p>
@@ -11,11 +14,12 @@
 						</div>
 						<div class="btn_mall">
 							购票
-						</div>
+						</div> 
 					</li>
 					
 				</ul>
-			</div>
+			</scroller>
+	</div>
 </template>
 
 <script>
@@ -30,13 +34,69 @@ Vue.filter("actorfilter",function(data){
 	//拼接数组成一个字符串,中间用空格分开
 	return allactors;
 })
+
+import BScroll from 'better-scroll'
 export default {
 	name:'nowplaying',
 	data(){
 		return{
-			filmslist:[]
+			filmslist:[],
+			pullDownMsg:"",
+			isLoading:true,
+			prevCityid:-1
 
 		}
+	},
+	methods:{
+		handleToDetail(){
+			console.log("handleToDetail");
+		},
+		handleToScroll(pos){
+			console.log("scroll");
+			if(pos.y>30){
+				this.pullDownMsg="正在更新"
+			}
+		},
+		handleToTouchEnd(pos){
+			console.log("touchEnd");
+			if(pos.y>30){
+				this.axios({
+					url:"https://m.maizuo.com/gateway?cityId=422800&pageNum=1&pageSize=10&type=1&k=5977190",
+					headers:{
+						'X-Client-Info': '{"a":"3000","ch":"1002","v":"5.0.4","e":"1597114756230519484710913","bc":"110100"}',
+						'X-Host': 'mall.film-ticket.film.list'
+					}
+				}).then(res=>{
+					this.pullDownMsg="更新成功"
+					setTimeout(()=>{
+						this.filmslist=res.data.data.films;
+						this.pullDownMsg=""
+					},1000)
+				});
+			}
+				
+		}
+
+	},
+	activated(){
+
+		var cityId=this.$store.state.city.id;
+		if(this.prevCityid===cityId){
+			return;//如果和之前的城市相同，那我就不向下执行了
+		}
+		this.isLoading=true;
+
+		this.axios({
+			url:"https://m.maizuo.com/gateway?cityId="+cityId+"&pageNum=1&pageSize=10&type=1&k=5140042",
+			headers:{
+				'X-Client-Info': '{"a":"3000","ch":"1002","v":"5.0.4","e":"1597114756230519484710913"}',
+				'X-Host': 'mall.film-ticket.film.list'
+			}
+		}).then(res=>{
+			this.filmslist=res.data.data.films;
+			this.isLoading=false;
+			this.prevCityid=cityId;
+		})
 	},
 	mounted(){
 		this.axios({
@@ -47,8 +107,41 @@ export default {
 			}
 		}).then(res=>{
 			this.filmslist=res.data.data.films;
+			this.isLoading=false;
+			//以下是没封装scroll的代码，通过封装scroll成全局组件scroller来给我们使用
+			// this.$nextTick(()=>{
+			// 	var scroll=new BScroll(this.$refs.movie_body,{
+			// 		tap:true,
+			// 		probeType:1,
+			// 	});
+			// 	scroll.on("scroll",(pos)=>{
+			// 		console.log("scroll");
+			// 		if(pos.y>30){
+			// 			this.pullDownMsg="正在更新"
+			// 		}
+			// 	});
+			// 	scroll.on("touchEnd",(pos)=>{
+			// 		console.log("touchEnd");
+			// 		if(pos.y>30){
+			// 			this.axios({
+			// 				url:"https://m.maizuo.com/gateway?cityId=422800&pageNum=1&pageSize=10&type=1&k=5977190",
+			// 				headers:{
+			// 					'X-Client-Info': '{"a":"3000","ch":"1002","v":"5.0.4","e":"1597114756230519484710913","bc":"110100"}',
+			// 					'X-Host': 'mall.film-ticket.film.list'
+			// 				}
+			// 			}).then(res=>{
+			// 				this.pullDownMsg="更新成功"
+			// 				setTimeout(()=>{
+			// 					this.filmslist=res.data.data.films;
+			// 					this.pullDownMsg=""
+			// 				},1000)
+			// 			});
+			// 		}
+			// 	})
+			// });
 
 		})
+
 	}
 }
 </script>
@@ -66,4 +159,5 @@ export default {
 .movie_body .info_list img{ width:50px; position: absolute; right:10px; top: 5px;}
 .movie_body .btn_mall , .movie_body .btn_pre{ width:47px; height:27px; line-height: 28px; text-align: center; background-color: #f03d37; color: #fff; border-radius: 4px; font-size: 12px; cursor: pointer;}
 .movie_body .btn_pre{ background-color: #3c9fe6;}
+.movie_body .pullDown{margin: 0;padding: 0;border: none;}
 </style>>

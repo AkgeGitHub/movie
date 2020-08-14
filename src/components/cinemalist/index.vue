@@ -1,5 +1,6 @@
 <template>
   <div class="cinema_body">
+          <loading v-if="isLoading"></loading>
 				<ul>
 					<li v-for="cinema in cinemalist" :key="cinema.cinemaId">
 						<div>
@@ -14,10 +15,10 @@
                 			<div>{{cinema.districtName}}</div>
                 			<div>{{cinema.phone}}</div>
        					</div>
-					</li>
-					
-				</ul>
-			</div>
+				</li>
+				
+			</ul>
+		</div>
 </template>
 
 <script>
@@ -25,8 +26,25 @@ export default {
     name:"cinemalist",
     data(){
         return{
-            cinemalist:[]
+            cinemalist:[],
+            isLoading:true,
+            prevCityid:-1
         }
+    },
+    activated(){
+		var cityId=this.$store.state.city.id;
+        if(this.prevCityid===cityId){return;}
+        this.axios({
+            url:"https://m.maizuo.com/gateway?cityId="+cityId+"&ticketFlag=1&k=7911014",
+            headers:{
+                'X-Client-Info': '{"a":"3000","ch":"1002","v":"5.0.4","e":"1597114756230519484710913","bc":"110100"}',
+                'X-Host': 'mall.film-ticket.cinema.list'
+            }
+        }).then(res=>{
+            this.cinemalist=res.data.data.cinemas;
+            this.isLoading=false
+        })
+        
     },
     mounted(){
         this.axios({
@@ -36,9 +54,8 @@ export default {
                 'X-Host': 'mall.film-ticket.cinema.list'
             }
         }).then(res=>{
-            console.log(res);
             this.cinemalist=res.data.data.cinemas;
-            console.log(this.cinemalist)
+            this.isLoading=false
         })
     }
 
