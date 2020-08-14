@@ -4,7 +4,7 @@
 		<div id="content">
 			<div class="movie_menu">
 				<router-link class="city_name" tag="div" to="/films/city">
-					<span>大连</span><i class="iconfont icon-lower-triangle"></i>
+					<span>{{$store.state.city.nm}}</span><i class="iconfont icon-lower-triangle"></i>
 				</router-link>
 				<div class="hot_swtich">
 					<router-link class="hot_item" tag='div' to="/films/nowplaying">正在热映</router-link>
@@ -22,9 +22,11 @@
 	</div>
 </template>
 
+
 <script>
 import Header from "@/components/header";
 import Tabbar from "@/components/tabbar";
+
 
 export default {
 	name: "films",
@@ -32,6 +34,8 @@ export default {
 		Header,
 		Tabbar,
 	},
+	mounted(){
+	}
 };
 </script>
 

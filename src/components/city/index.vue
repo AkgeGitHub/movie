@@ -1,10 +1,13 @@
 <template>
   <div class="city_body">
     <div class="city_list">
+    <loading v-if="isLoading"></loading>
+    <scroller ref="city_list">
+        <div>
       <div class="city_hot">
         <h2>热门城市</h2>
         <ul class="clearfix">
-            <li v-for="hot in hotlist" :key="hot.cityId">
+            <li v-for="hot in hotlist" :key="hot.cityId" @tap="handleToCity(hot.name,hot.cityId)">
                 {{hot.name}}
             </li>
         </ul>
@@ -13,13 +16,14 @@
         <div v-for="citysort in citylist" :key="citysort.index">
             <h2>{{citysort.index}}</h2>
             <ul>
-                <li v-for="cities in citysort.list" :key="cities.cityId">
+                <li v-for="cities in citysort.list" :key="cities.cityId" @tap="handleToCity(cities.name,cities.cityId)">
                     {{cities.name}}
                 </li>
             </ul>
         </div>
-       
       </div>
+      </div>
+    </scroller>
     </div>
     <div class="city_index">
       <ul>
@@ -37,7 +41,8 @@ export default {
     data(){
         return{
             citylist:[],
-            hotlist:[]
+            hotlist:[],
+            isLoading:true
         }
     },
     methods:{
@@ -89,26 +94,50 @@ export default {
         },
         handeleToIndex(index){
             var h2=this.$refs.city_sort.getElementsByTagName("h2");
-            this.$refs.city_sort.parentNode.scrollTop=h2[index].offsetTop
+            // this.$refs.city_sort.parentNode.scrollTop=h2[index].offsetTop
+
+            this.$refs.city_list.ToScrollTop(-h2[index].offsetTop);//因为是网上滚动所以是负的
+            //因为我们使用了better-scroll，当前节点就被scroll控制，所以我们自己的原生方法是就没用了,只能通过better-scroll的scrollTo方法。
+            //因为scroller是我们自己封装的，所以在我们自己封装的scroller中定义方法，通过我们自己的方法来用scrollTo方法
+            //所以<scroller></scroller>通过操作scroller的节点直接获取到它的方法来操作
+        },
+        handleToCity(nm,id){
+            this.$store.commit('city/CITY_INFO',{nm,id});
+            window.localStorage.setItem("nowName",nm);
+            window.localStorage.setItem("nowId",id);
+            this.$router.push("/films/nowplaying")
         }
         
     },
     mounted(){
-        this.axios({
+
+        var citylist=window.localStorage.getItem('citylist');
+        var hotlist=window.localStorage.getItem('hotlist');
+        if(citylist && hotlist){
+            this.isLoading=false;
+            this.citylist=JSON.parse(citylist);
+            this.hotlist=JSON.parse(hotlist);
+        }else{
+            this.axios({
             url:"https://m.maizuo.com/gateway?k=7731292",
             headers:{
-              "X-Client-Info": '{"a":"3000","ch":"1002","v":"5.0.4","e":"1597114756230519484710913"}',
-             "X-Host": "mall.film-ticket.city.list"
-            }
-        }).then(res=>{
+                "X-Client-Info": '{"a":"3000","ch":"1002","v":"5.0.4","e":"1597114756230519484710913"}',
+                "X-Host": "mall.film-ticket.city.list"
+                }
+            }).then(res=>{
             if(res.data.msg==="ok"){
                 var cities=res.data.data.cities;
                 var {citylist,hotlist}=this.formatCitylist(cities);
                 this.citylist=citylist;
                 this.hotlist=hotlist;
+                this.isLoading=false;
+                window.localStorage.setItem("citylist",JSON.stringify(citylist));
+                window.localStorage.setItem("hotlist",JSON.stringify(hotlist));
             }
 
         })
+        }
+
     }
 };
 </script>
