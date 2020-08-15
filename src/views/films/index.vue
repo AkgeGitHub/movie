@@ -15,10 +15,11 @@
 				</router-link>
 			</div>
 			<keep-alive>
-				<router-view />
+				<router-view/>
 			</keep-alive>
 		</div>
 		<Tabbar></Tabbar>
+		<router-view name="detail"/>
 	</div>
 </template>
 
