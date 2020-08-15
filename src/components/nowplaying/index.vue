@@ -5,9 +5,9 @@
 				<ul>
 					<li class="pullDown">{{pullDownMsg}}</li>
 					<li v-for="film in filmslist" :key="film.filmId">
-						<div class="pic_show" @tap="handleToDetail"><img :src="film.poster"></div>
+						<div class="pic_show" @tap="handleToDetail(film.filmId)"><img :src="film.poster"></div>
 						<div class="info_list">
-							<h2>{{film.name}}</h2>
+							<h2 @tap="handleToDetail(film.filmId)">{{film.name}}</h2>
 							<p>观众评 <span class="grade">{{film.grade}}</span></p>
 							<p>主演: {{film.actors|actorfilter}}</p>
 							<p>{{film.synopsis}}</p>
@@ -26,7 +26,7 @@
 import Vue from 'vue'
 Vue.filter("actorfilter",function(data){
 	//这里的data就是传过来的film.actors
-	var actorslist=data.map(item=>item.name)
+	var actorslist=(data||[]).map(item=>item.name)
 	//遍历film.actors   取到name把每一个film.actors整体映射成下面这样
 	//["萨姆·门德斯", "乔治·麦凯", "迪恩·查尔斯·查普曼", "科林·费斯", "本尼迪克特·蒂莫西·卡尔顿·康伯巴奇"]
 	
@@ -48,8 +48,9 @@ export default {
 		}
 	},
 	methods:{
-		handleToDetail(){
-			console.log("handleToDetail");
+		handleToDetail(id){
+			console.log(id);
+			this.$router.push("/films/detail/1/"+id)
 		},
 		handleToScroll(pos){
 			console.log("scroll");
